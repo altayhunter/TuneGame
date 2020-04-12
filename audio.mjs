@@ -1,18 +1,8 @@
-// Index-to-name mappings for noteFrequencies values.
-const noteNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
-
-// Frequencies in Hz using even temperament and A440 tuning.
+// Frequencies of B3-C5 in Hz using even temperament and A440 tuning.
 const noteFrequencies = [
-	[16.35160, 17.32391, 18.35405, 19.44544, 20.60172, 21.82676, 23.12465, 24.49971, 25.95654, 27.50000, 29.13524, 30.86771],
-	[32.70320, 34.64783, 36.70810, 38.89087, 41.20344, 43.65353, 46.24930, 48.99943, 51.91309, 55.00000, 58.27047, 61.73541],
-	[65.40639, 69.29566, 73.41619, 77.78175, 82.40689, 87.30706, 92.49861, 97.99886, 103.8262, 110.0000, 116.5409, 123.4708],
-	[130.8128, 138.5913, 146.8324, 155.5635, 164.8138, 174.6141, 184.9972, 195.9977, 207.6523, 220.0000, 233.0819, 246.9417],
-	[261.6256, 277.1826, 293.6648, 311.1270, 329.6276, 349.2282, 369.9944, 391.9954, 415.3047, 440.0000, 466.1638, 493.8833],
-	[523.2511, 554.3653, 587.3295, 622.2540, 659.2551, 698.4565, 739.9888, 783.9909, 830.6094, 880.0000, 932.3275, 987.7666],
-	[1046.502, 1108.731, 1174.659, 1244.508, 1318.510, 1396.913, 1479.978, 1567.982, 1661.219, 1760.000, 1864.655, 1975.533],
-	[2093.005, 2217.461, 2349.318, 2489.016, 2637.020, 2793.826, 2959.955, 3135.963, 3322.438, 3520.000, 3729.310, 3951.066],
-	[4186.009, 4434.922, 4698.636, 4978.032, 5274.041, 5587.652, 5919.911, 6271.927, 6644.875, 7040.000, 7458.620, 7902.133],
-];
+	246.9417, 261.6256, 277.1826, 293.6648, 311.1270, 329.6276, 349.2282,
+	369.9944, 391.9954, 415.3047, 440.0000, 466.1638, 493.8833, 523.2511
+]
 
 // AudioContext for the oscillators.
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -30,40 +20,29 @@ function playFrequency(frequency) {
 	oscillator.connect(sweepEnv).connect(audioCtx.destination);
 	oscillator.start();
 	oscillator.stop(audioCtx.currentTime + duration);
+	console.log('Played frequency', frequency);
 }
 
-function randomNeighborFrequency(index, octave) {
-	const maxIndex = noteFrequencies[octave].length - 1;
-	const maxOctave = noteFrequencies.length - 1;
-	if (index === 0 && octave === 0) {
-		return noteFrequencies[0][1];
-	} else if (index === maxIndex && octave === maxOctave) {
-		return noteFrequencies[maxOctave][maxIndex];
-	}
-	const neighbor = Math.random() < 0.5 ? index - 1 : index + 1;
-	if (neighbor < 0) {
-		return noteFrequencies[octave - 1][maxIndex];
-	} else if (neighbor > maxIndex) {
-		return noteFrequencies[octave + 1][0];
+// Return the frequency of an adjacent note based on the sign of the error.
+function neighborFrequency(index, error) {
+	if (error < 0) {
+		return noteFrequencies[index - 1];
 	} else {
-		return noteFrequencies[octave][neighbor];
+		return noteFrequencies[index + 1];
 	}
 }
 
 // TODO: Make this exponential instead of linear!
+// Return the value error-fraction of the way from correct to incorrect.
 function getFrequencyWithError(correct, incorrect, error) {
 	const range = Math.abs(correct - incorrect);
-	if (correct > incorrect) {
-		return correct - range * error;
-	} else {
-		return correct + range * error;
-	}
+	return correct + range * error;
 }
 
 // Play the frequency corresponding to the given piano key index.
-function playNote(index, octave, error) {
-	const neighbor = randomNeighborFrequency(index, octave);
-	const frequency = getFrequencyWithError(noteFrequencies[octave][index], neighbor, error);
+function playNote(index, error) {
+	const neighbor = neighborFrequency(index + 1, error);
+	const frequency = getFrequencyWithError(noteFrequencies[index + 1], neighbor, error);
 	playFrequency(frequency);
 }
 

@@ -3,9 +3,7 @@ import {
 } from './audio.mjs';
 import {
 	retrieveHighScore,
-	retrieveOctaves,
 	storeHighScore,
-	storeOctaves,
 } from './storage.mjs';
 
 // DOM elements.
@@ -15,27 +13,29 @@ const submitButton = document.getElementById('submit');
 const continueButton = document.getElementById('continue');
 const tryAgainButton = document.getElementById('tryAgain');
 const pianoKeys = document.getElementsByClassName('pianoKey');
-const octaveButtons = document.getElementsByClassName('selector');
-const startButton = document.getElementById('start');
-const setupArea = document.getElementById('setup');
-const gameArea = document.getElementById('game');
 
 // Globals.
-const octaves = [];
 const answer = {};
-let error = 0.25;
+const ramp = 0.9;
+let error;
 
-function getScore() {
-	return parseFloat((error / 0.9 * 100).toPrecision(4));
+// Update the error for the next round, or reset it to its initial value.
+function setError(reset) {
+	error *= ramp;
+	if (reset) error = 0.25;
+	if (Math.random() < 0.5) error *= -1;
 }
 
-// Select a new random note and octave.
+// Return the error of the previous round as a percentage.
+function getScore() {
+	return parseFloat((Math.abs(error) / ramp * 100).toPrecision(4));
+}
+
+// Select a new random note.
 function chooseRandomNote() {
 	const randomInt = (max) => max * Math.random() << 0;
-	const octave = octaves[randomInt(octaves.length)];
 	const index = randomInt(pianoKeys.length);
 	answer['index'] = index;
-	answer['octave'] = octave;
 	answer['shown'] = false;
 }
 
@@ -66,15 +66,17 @@ function answerDistance(index) {
 function checkHighScore() {
 	const score = getScore();
 	const record = retrieveHighScore();
+	console.log("Score", score);
+	console.log("Record", record);
 	if (score <= 25) {
 		detailsText.innerHTML = 'Your precision: ' + score + '%';
+		if (score < record) {
+			storeHighScore(score);
+		}
 	}
-	if (record) {
+	if (record <= 25) {
 		detailsText.innerHTML += '<br>';
 		detailsText.innerHTML += 'Previous best: ' + record + '%';
-	}
-	if (!record || score < record) {
-		storeHighScore(score);
 	}
 }
 
@@ -87,8 +89,9 @@ function submitHandler() {
 	const distance = answerDistance(index);
 	if (distance == 0) {
 		resultText.textContent = 'Correct!';
-		detailsText.textContent = 'Next one will be 10% harder';
-		error *= 0.9;
+		const scale = Math.round(100 * (1 - ramp));
+		detailsText.textContent = `Next one will be ${scale}% harder`;
+		setError(false);
 		continueButton.classList.remove('hidden');
 	} else {
 		resultText.textContent = 'Game Over';
@@ -100,19 +103,36 @@ function submitHandler() {
 	submitButton.classList.add('hidden');
 }
 
+// Mark the piano key as selected and play the corresponding tone.
 function selectHandler(index) {
 	if (answer['shown']) return;
 	resetPianoKeys();
 	pianoKeys[index].classList.add('selected');
-	playNote(index, answer['octave'], index === answer['index'] ? error : 0);
+	playNote(index, index === answer['index'] ? error : 0);
 	submitButton.disabled = false;
 }
 
-// Add the click handlers to the piano keys.
+// Add the click and keypress handlers to the piano keys.
 function setPianoKeyHandlers() {
 	for (let i = 0; i < pianoKeys.length; i += 1) {
 		pianoKeys[i].addEventListener('click', () => selectHandler(i));
 	}
+	document.addEventListener('keydown', (event) => {
+		switch (event.code) {
+			case "KeyS": return selectHandler(0);
+			case "KeyE": return selectHandler(1);
+			case "KeyD": return selectHandler(2);
+			case "KeyR": return selectHandler(3);
+			case "KeyF": return selectHandler(4);
+			case "KeyJ": return selectHandler(5);
+			case "KeyI": return selectHandler(6);
+			case "KeyK": return selectHandler(7);
+			case "KeyO": return selectHandler(8);
+			case "KeyL": return selectHandler(9);
+			case "KeyP": return selectHandler(10);
+			case "Semicolon": return selectHandler(11);
+		}
+	});
 }
 
 // Reset the board and select a new note for the player to guess.
@@ -125,49 +145,16 @@ function continueHandler() {
 	continueButton.classList.add('hidden');
 }
 
-// Reset the error and start a new game with the same octaves.
+// Reset the error and start a new game.
 function tryAgainHandler() {
-	error = 0.25;
+	setError(true);
 	tryAgainButton.classList.add('hidden');
 	continueHandler();
 }
 
-// Add an octave if it's missing, or remove it if it already exists.
-function toggleOctave(octave) {
-	if (octaves.includes(octave)) {
-		octaves.splice(octaves.indexOf(octave), 1);
-	} else {
-		octaves.push(octave);
-	}
-}
-
-// Add/remove the selected octave to/from the list of octaves to use.
-function octaveClickHandler(index) {
-	octaveButtons[index].classList.toggle('selected');
-	toggleOctave(index + 1);
-	startButton.disabled = octaves.length < 1;
-}
-
-// Add the click handler to the octave selectors.
-function setOctaveHandlers() {
-	for (let i = 0; i < octaveButtons.length; i += 1) {
-		octaveButtons[i].addEventListener('click', () => octaveClickHandler(i));
-	}
-	retrieveOctaves().forEach(item => octaveClickHandler(item - 1));
-}
-
-// Start the game with the selected octaves.
-function startHandler() {
-	storeOctaves(octaves);
-	setupArea.classList.add('hidden');
-	gameArea.classList.remove('hidden');
-	continueButton.addEventListener('click', continueHandler);
-	tryAgainButton.addEventListener('click', tryAgainHandler);
-	setPianoKeyHandlers();
-	continueHandler();
-}
-
-// Activate the start button and the octave selectors.
-startButton.addEventListener('click', startHandler);
+// Initialize the handlers and start the game.
 submitButton.addEventListener('click', submitHandler);
-setOctaveHandlers();
+continueButton.addEventListener('click', continueHandler);
+tryAgainButton.addEventListener('click', tryAgainHandler);
+setPianoKeyHandlers();
+tryAgainHandler();
