@@ -1,9 +1,3 @@
-// Frequencies of B3-C5 in Hz using even temperament and A440 tuning.
-const noteFrequencies = [
-	246.9417, 261.6256, 277.1826, 293.6648, 311.1270, 329.6276, 349.2282,
-	369.9944, 391.9954, 415.3047, 440.0000, 466.1638, 493.8833, 523.2511
-]
-
 // AudioContext for the oscillators.
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
@@ -20,29 +14,17 @@ function playFrequency(frequency) {
 	oscillator.connect(sweepEnv).connect(audioCtx.destination);
 	oscillator.start();
 	oscillator.stop(audioCtx.currentTime + duration);
-	console.log('Played frequency', frequency);
 }
 
-// Return the frequency of an adjacent note based on the sign of the error.
-function neighborFrequency(index, error) {
-	if (error < 0) {
-		return noteFrequencies[index - 1];
-	} else {
-		return noteFrequencies[index + 1];
-	}
-}
-
-// TODO: Make this exponential instead of linear!
-// Return the value error-fraction of the way from correct to incorrect.
-function getFrequencyWithError(correct, incorrect, error) {
-	const range = Math.abs(correct - incorrect);
-	return correct + range * error;
+// Continuous range of frequencies using even temperament and A440 tuning.
+// B4 is at index 0 and C4 is at index 11.
+function noteFrequency(index) {
+	return 440 * Math.pow(2, (index - 9) / 12);
 }
 
 // Play the frequency corresponding to the given piano key index.
 function playNote(index, error) {
-	const neighbor = neighborFrequency(index + 1, error);
-	const frequency = getFrequencyWithError(noteFrequencies[index + 1], neighbor, error);
+	const frequency = noteFrequency(index + error);
 	playFrequency(frequency);
 }
 

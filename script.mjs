@@ -66,8 +66,6 @@ function answerDistance(index) {
 function checkHighScore() {
 	const score = getScore();
 	const record = retrieveHighScore();
-	console.log("Score", score);
-	console.log("Record", record);
 	if (score <= 25) {
 		detailsText.innerHTML = 'Your precision: ' + score + '%';
 		if (score < record) {
@@ -93,6 +91,7 @@ function submitHandler() {
 		detailsText.textContent = `Next one will be ${scale}% harder`;
 		setError(false);
 		continueButton.classList.remove('hidden');
+		continueButton.focus();
 	} else {
 		resultText.textContent = 'Game Over';
 		checkHighScore();
@@ -131,6 +130,7 @@ function setPianoKeyHandlers() {
 			case "KeyL": return selectHandler(9);
 			case "KeyP": return selectHandler(10);
 			case "Semicolon": return selectHandler(11);
+			case "Space": return submitHandler();
 		}
 	});
 }
