@@ -46,6 +46,7 @@ function resetPianoKeys() {
 	}
 }
 
+// Return the index of the selected piano key.
 function selectedPianoKey() {
 	for (let i = 0; i < pianoKeys.length; i += 1) {
 		if (pianoKeys[i].classList.contains('selected')) {
