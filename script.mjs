@@ -119,19 +119,19 @@ function setPianoKeyHandlers() {
 	}
 	document.addEventListener('keydown', (event) => {
 		switch (event.code) {
-			case "KeyS": return selectHandler(0);
-			case "KeyE": return selectHandler(1);
-			case "KeyD": return selectHandler(2);
-			case "KeyR": return selectHandler(3);
-			case "KeyF": return selectHandler(4);
-			case "KeyJ": return selectHandler(5);
-			case "KeyI": return selectHandler(6);
-			case "KeyK": return selectHandler(7);
-			case "KeyO": return selectHandler(8);
-			case "KeyL": return selectHandler(9);
-			case "KeyP": return selectHandler(10);
-			case "Semicolon": return selectHandler(11);
-			case "Space": return submitHandler();
+			case 'KeyS': return selectHandler(0);
+			case 'KeyE': return selectHandler(1);
+			case 'KeyD': return selectHandler(2);
+			case 'KeyR': return selectHandler(3);
+			case 'KeyF': return selectHandler(4);
+			case 'KeyJ': return selectHandler(5);
+			case 'KeyI': return selectHandler(6);
+			case 'KeyK': return selectHandler(7);
+			case 'KeyO': return selectHandler(8);
+			case 'KeyL': return selectHandler(9);
+			case 'KeyP': return selectHandler(10);
+			case 'Semicolon': return selectHandler(11);
+			case 'Space': return submitHandler();
 		}
 	});
 }
